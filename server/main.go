@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"regexp"
 	"time"
@@ -11,8 +11,6 @@ import (
 
 func main() {
 	cmd := exec.Command("usbipd", "-D")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	cmd.Start()
 	for true {
 		out, err := exec.Command("usbip", "list", "-l").Output()
@@ -26,7 +24,15 @@ func main() {
 
 func usbBind(busid string) {
 	cmd := exec.Command("usbip", "bind", "-b", busid)
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
 	cmd.Start()
+	slurp, _ := ioutil.ReadAll(stderr)
+	if string(slurp) != "usbip: error: device on busid "+busid+" is already bound to usbip-host\n" {
+		fmt.Println("Bound", busid, "Successfully")
+	}
 }
 
 func usbParse(str string) {
@@ -37,10 +43,8 @@ func usbParse(str string) {
 	}
 	for i := 0; i < len(found); i++ {
 		busid := found[i]
-		if busid == "1-1.1" || busid == "1-1.2" {
-
-		} else {
-			fmt.Println("BUSID:", busid)
+		if !(busid == "1-1.1" || busid == "1-1.2") {
+			//fmt.Println("BUSID:", busid)
 			usbBind(busid)
 		}
 	}
