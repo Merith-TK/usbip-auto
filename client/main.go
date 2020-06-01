@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	execute = "C:/Tools/usbip/usbip.exe"
+	execute = "usbip"
 	//remote  = "192.168.0.113"
 	remote string
 )
