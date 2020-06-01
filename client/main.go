@@ -1,47 +1,51 @@
 package main
 
+// Client software, the execute var will be
+// delegated to $PATH in release, and remote
+// will be delegated to the `-r` flag
 import (
 	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
+	"time"
 )
 
 var (
-	foo = "bar"
-	str = `======================
-	- 192.168.0.113
-		 1-1.4: SanDisk Corp. : unknown product (0781:5575)
-			  : /sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.4
-			  : (Defined at Interface level) (00/00/00)
-   
-		 1-1.3: SanDisk Corp. : unknown product (0781:5597)
-			  : /sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.3
-			  : (Defined at Interface level) (00/00/00)
-`
-
+	execute = "C:/Tools/usbip/usbip.exe"
+	//remote  = "192.168.0.113"
 	remote string
 )
 
 func main() {
 	flag.StringVar(&remote, "r", "", "Define the remote USBIP server's IP")
 	flag.Parse()
-	usbParse(str, remote)
+
+	if remote == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+	for {
+		usbParse(remote)
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func usbMount(b string, r string) {
-	cmd := exec.Command("usbip", "attach", "-r", r, "-b", b)
+	cmd := exec.Command(execute, "attach", "-r", r, "-b", b)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Start()
 }
 
-func usbParse(str string, remote string) {
-	if remote == "" {
-		flag.Usage()
-		os.Exit(1)
+func usbParse(remote string) {
+	out, err := exec.Command(execute, "list", "-r", remote).Output()
+	if err != nil {
+		fmt.Println("CMD:", err)
+		os.Exit(6)
 	}
+	str := string(out)
 	var re = regexp.MustCompile(`(1-1\.\d*)(:)`)
 	var found []string
 	for _, match := range re.FindAllStringSubmatch(str, -1) {

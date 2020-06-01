@@ -1,3 +1,3 @@
-module usbauto-server
+module usbipd-auto
 
 go 1.14

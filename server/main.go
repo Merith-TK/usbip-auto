@@ -1,8 +1,11 @@
 package main
 
+// Server Software, currently the black listed
+// usb ports have to be hardcoded, this needs
+// to be ran as root or with a user that can
+// run `usbipd -D` and `usbip bind -b busid`
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os/exec"
 	"regexp"
@@ -18,21 +21,14 @@ func main() {
 			log.Fatal(err)
 		}
 		usbParse(string(out))
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
 
 func usbBind(busid string) {
 	cmd := exec.Command("usbip", "bind", "-b", busid)
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
 	cmd.Start()
-	slurp, _ := ioutil.ReadAll(stderr)
-	if string(slurp) != "usbip: error: device on busid "+busid+" is already bound to usbip-host\n" {
-		fmt.Println("Bound", busid, "Successfully")
-	}
+	fmt.Println("BOUND: ", busid)
 }
 
 func usbParse(str string) {
@@ -44,7 +40,6 @@ func usbParse(str string) {
 	for i := 0; i < len(found); i++ {
 		busid := found[i]
 		if !(busid == "1-1.1" || busid == "1-1.2") {
-			//fmt.Println("BUSID:", busid)
 			usbBind(busid)
 		}
 	}

@@ -1,2 +1,3 @@
-server/usbauto-server
-client/usbauto-client
+server/usbipd-auto
+client/usbip-auto
+*.exe
